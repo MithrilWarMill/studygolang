@@ -85,9 +85,21 @@ func (self UserLogic) CreateUser(ctx context.Context, form url.Values) (errMsg s
 		errMsg = "内部服务错误！"
 		session.Rollback()
 		objLog.Errorln("create user error:", err)
-	} else {
-		session.Commit()
+		return
 	}
+
+	if form.Get("id") != "" {
+		id := goutils.MustInt(form.Get("id"))
+		_, err = DefaultWechat.Bind(ctx, id, user.Uid, form.Get("userInfo"))
+		if err != nil {
+			session.Rollback()
+			objLog.Errorln("bind wechat user error:", err)
+			errMsg = err.Error()
+			return
+		}
+	}
+
+	session.Commit()
 
 	return
 }
